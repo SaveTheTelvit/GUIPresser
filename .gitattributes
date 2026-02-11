@@ -1,5 +1,5 @@
 * text=auto eol=lf
 
-/**  export-ignore
-/addons  !export_ignore
-/addons/** !export_ignore
+/**        export-ignore
+/addons    !export-ignore
+/addons/** !export-ignore
