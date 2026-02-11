@@ -11,7 +11,7 @@ signal activated(button: int)
 
 var parent: Control = null
 
-var pressed: bool = false
+var pressed_arr: Array[bool] = [false, false, false]
 var hovered: bool = false
 
 func _set_disabled(state: bool) -> void:
@@ -37,26 +37,13 @@ func _connect_parent() -> void:
 		if !parent.mouse_exited.is_connected(_hover_state_changed):
 			parent.mouse_exited.connect(_hover_state_changed.bind(false))
 
-func _get_configuration_warning() -> String:
+func _get_configuration_warnings() -> PackedStringArray:
 	var _parent = get_parent()
-	if _parent && _parent is Control : return "" 
-	return "A parent of the Control class is required"
-
-func _process(_delta: float) -> void: update_hovered()
-
-func update_hovered() -> void:
-	var cursor: Vector2 = parent.get_local_mouse_position()
-	var new_state: bool = (
-		cursor.x >= 0 && cursor.x <= parent.size.x && \
-		cursor.y >= 0 && cursor.y <= parent.size.y
-	)
-	if new_state != hovered:
-		hovered = new_state
-		emit_signal("hover_state_changed", hovered)
+	if _parent && _parent is Control : return [] 
+	return ["A parent of the Control class is required"]
 
 func _notification(what: int) -> void:
 	match what:
-		NOTIFICATION_READY: set_process(false)
 		NOTIFICATION_PARENTED:
 			var _parent = get_parent()
 			if !_parent || !(_parent is Control):
@@ -77,7 +64,9 @@ func _hover_state_changed(value: bool) -> void:
 
 func _gui_processing(event: InputEvent) -> void:
 	if event is InputEventMouseButton && BUTTONS.has(event.button_index):
-		pressed = event.pressed
-		emit_signal("pressed_state_changed", pressed, event.button_index)
-		set_process(pressed)
-		if !pressed && hovered: emit_signal("activated", event.button_index)
+		if event.pressed && !hovered: return
+		var arr_index: int = event.button_index - 1
+		if pressed_arr[arr_index] == event.pressed: return
+		pressed_arr[arr_index] = event.pressed
+		emit_signal("pressed_state_changed", event.pressed, event.button_index)
+		if !event.pressed && hovered: emit_signal("activated", event.button_index)
