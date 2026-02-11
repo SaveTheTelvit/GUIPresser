@@ -23,19 +23,19 @@ func _disconnect_parent() -> void:
 	if parent:
 		if parent.is_connected("gui_input", self, "_gui_processing"):
 			parent.disconnect("gui_input", self, "_gui_processing")
-		if parent.is_connected("mouse_entered", self, "hover_state_changed"):
-			parent.disconnect("mouse_entered", self, "hover_state_changed")
-		if parent.is_connected("mouse_exited", self, "hover_state_changed"):
-			parent.disconnect("mouse_exited", self, "hover_state_changed")
+		if parent.is_connected("mouse_entered", self, "_hover_state_changed"):
+			parent.disconnect("mouse_entered", self, "_hover_state_changed")
+		if parent.is_connected("mouse_exited", self, "_hover_state_changed"):
+			parent.disconnect("mouse_exited", self, "_hover_state_changed")
 
 func _connect_parent() -> void:
 	if parent:
 		if !parent.is_connected("gui_input", self, "_gui_processing"):
 			parent.connect("gui_input", self, "_gui_processing")
-		if !parent.is_connected("mouse_entered", self, "hover_state_changed"):
-			parent.connect("mouse_entered", self, "hover_state_changed", [true])
-		if !parent.is_connected("mouse_exited", self, "hover_state_changed"):
-			parent.connect("mouse_exited", self, "hover_state_changed", [false])
+		if !parent.is_connected("mouse_entered", self, "_hover_state_changed"):
+			parent.connect("mouse_entered", self, "_hover_state_changed", [true])
+		if !parent.is_connected("mouse_exited", self, "_hover_state_changed"):
+			parent.connect("mouse_exited", self, "_hover_state_changed", [false])
 
 func _get_configuration_warning() -> String:
 	var _parent = get_parent()
@@ -70,7 +70,7 @@ func _notification(what: int) -> void:
 				_disconnect_parent()
 				parent = null
 
-func hover_state_changed(value: bool) -> void:
+func _hover_state_changed(value: bool) -> void:
 	if hovered != value:
 		hovered = value
 		emit_signal("hover_state_changed", value)
