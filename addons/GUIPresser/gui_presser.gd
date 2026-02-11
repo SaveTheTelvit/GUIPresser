@@ -11,7 +11,7 @@ export var disabled: bool = false setget _set_disabled
 
 var parent: Control = null
 
-var pressed: bool = false
+var pressed_arr: Array = [false, false, false]
 var hovered: bool = false
 
 func _set_disabled(state: bool) -> void:
@@ -77,8 +77,11 @@ func _hover_state_changed(value: bool) -> void:
 
 func _gui_processing(event: InputEvent) -> void:
 	if event is InputEventMouseButton && BUTTONS.has(event.button_index):
-		pressed = event.pressed
-		emit_signal("pressed_state_changed", pressed, event.button_index)
-		set_process(pressed)
-		if !pressed && hovered: emit_signal("activated", event.button_index)
+		if event.pressed && !hovered: return
+		var arr_index: int = event.button_index - 1
+		if pressed_arr[arr_index] == event.pressed: return
+		pressed_arr[arr_index] = event.pressed
+		emit_signal("pressed_state_changed", event.pressed, event.button_index)
+		set_process(pressed_arr.has(true))
+		if !event.pressed && hovered: emit_signal("activated", event.button_index)
 
