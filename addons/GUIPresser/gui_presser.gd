@@ -1,13 +1,13 @@
-tool
+@tool
 extends Node
 
-const BUTTONS: Array = [BUTTON_LEFT, BUTTON_RIGHT, BUTTON_MIDDLE]
+const BUTTONS: Array[int] = [MOUSE_BUTTON_LEFT, MOUSE_BUTTON_RIGHT, MOUSE_BUTTON_MIDDLE]
 
-signal hover_state_changed(state)
-signal pressed_state_changed(state, button)
-signal activated(button)
+signal hover_state_changed(state: bool)
+signal pressed_state_changed(state: bool, button: int)
+signal activated(button: int)
 
-export var disabled: bool = false setget _set_disabled
+@export var disabled: bool = false : set = _set_disabled
 
 var parent: Control = null
 
@@ -21,21 +21,21 @@ func _set_disabled(state: bool) -> void:
 
 func _disconnect_parent() -> void:
 	if parent:
-		if parent.is_connected("gui_input", self, "_gui_processing"):
-			parent.disconnect("gui_input", self, "_gui_processing")
-		if parent.is_connected("mouse_entered", self, "hover_state_changed"):
-			parent.disconnect("mouse_entered", self, "hover_state_changed")
-		if parent.is_connected("mouse_exited", self, "hover_state_changed"):
-			parent.disconnect("mouse_exited", self, "hover_state_changed")
+		if parent.gui_input.is_connected(_gui_processing):
+			parent.gui_input.disconnect(_gui_processing)
+		if parent.mouse_entered.is_connected(_hover_state_changed):
+			parent.mouse_entered.disconnect(_hover_state_changed)
+		if parent.mouse_exited.is_connected(_hover_state_changed):
+			parent.mouse_exited.disconnect(_hover_state_changed)
 
 func _connect_parent() -> void:
 	if parent:
-		if !parent.is_connected("gui_input", self, "_gui_processing"):
-			parent.connect("gui_input", self, "_gui_processing")
-		if !parent.is_connected("mouse_entered", self, "hover_state_changed"):
-			parent.connect("mouse_entered", self, "hover_state_changed", [true])
-		if !parent.is_connected("mouse_exited", self, "hover_state_changed"):
-			parent.connect("mouse_exited", self, "hover_state_changed", [false])
+		if !parent.gui_input.is_connected(_gui_processing):
+			parent.gui_input.connect(_gui_processing)
+		if !parent.mouse_entered.is_connected(_hover_state_changed):
+			parent.mouse_entered.connect(_hover_state_changed.bind(true))
+		if !parent.mouse_exited.is_connected(_hover_state_changed):
+			parent.mouse_exited.connect(_hover_state_changed.bind(false))
 
 func _get_configuration_warning() -> String:
 	var _parent = get_parent()
@@ -47,8 +47,8 @@ func _process(_delta: float) -> void: update_hovered()
 func update_hovered() -> void:
 	var cursor: Vector2 = parent.get_local_mouse_position()
 	var new_state: bool = (
-		cursor.x >= 0 && cursor.x <= parent.rect_size.x && \
-		cursor.y >= 0 && cursor.y <= parent.rect_size.y
+		cursor.x >= 0 && cursor.x <= parent.size.x && \
+		cursor.y >= 0 && cursor.y <= parent.size.y
 	)
 	if new_state != hovered:
 		hovered = new_state
@@ -61,7 +61,7 @@ func _notification(what: int) -> void:
 			var _parent = get_parent()
 			if !_parent || !(_parent is Control):
 				parent = null
-				update_configuration_warning()
+				update_configuration_warnings()
 				return
 			parent = _parent
 			if !disabled: _connect_parent()
@@ -70,7 +70,7 @@ func _notification(what: int) -> void:
 				_disconnect_parent()
 				parent = null
 
-func hover_state_changed(value: bool) -> void:
+func _hover_state_changed(value: bool) -> void:
 	if hovered != value:
 		hovered = value
 		emit_signal("hover_state_changed", value)
@@ -81,4 +81,3 @@ func _gui_processing(event: InputEvent) -> void:
 		emit_signal("pressed_state_changed", pressed, event.button_index)
 		set_process(pressed)
 		if !pressed && hovered: emit_signal("activated", event.button_index)
-
