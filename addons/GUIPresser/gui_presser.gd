@@ -1,23 +1,36 @@
 tool
 extends Node
 
-const BUTTONS: Array = [BUTTON_LEFT, BUTTON_RIGHT, BUTTON_MIDDLE]
+class_name GUIPresser
+
+const MASK: Dictionary = {BUTTON_LEFT : BUTTON_MASK_LEFT, BUTTON_RIGHT : BUTTON_MASK_RIGHT, BUTTON_MIDDLE: BUTTON_MASK_MIDDLE}
 
 signal hover_state_changed(state)
 signal pressed_state_changed(state, button)
 signal activated(button)
 
 export var disabled: bool = false setget _set_disabled
+export(int, FLAGS, "Mouse Left", "Mouse Right", "Mouse Middle") var button_mask: int = 7 setget _set_button_mask
 
 var parent: Control = null
 
-var pressed_arr: Array = [false, false, false]
+var pressed: int = 0
 var hovered: bool = false
 
 func _set_disabled(state: bool) -> void:
 	disabled = state
 	if disabled: _disconnect_parent()
 	else: _connect_parent()
+
+func _set_button_mask(value: int) -> void:
+	var changes: int = (value ^ button_mask)
+	var values: Array = MASK.values()
+	for i in values.size():
+		var m: int = values[i]
+		if changes & m && !(value & m) && pressed & m: 
+			pressed &= ~m
+			emit_signal("pressed_state_changed", false, MASK.keys()[i])
+	button_mask = value
 
 func _disconnect_parent() -> void:
 	if parent:
@@ -76,12 +89,13 @@ func _hover_state_changed(value: bool) -> void:
 		emit_signal("hover_state_changed", value)
 
 func _gui_processing(event: InputEvent) -> void:
-	if event is InputEventMouseButton && BUTTONS.has(event.button_index):
+	if event is InputEventMouseButton && MASK.has(event.button_index):
 		if event.pressed && !hovered: return
-		var arr_index: int = event.button_index - 1
-		if pressed_arr[arr_index] == event.pressed: return
-		pressed_arr[arr_index] = event.pressed
+		var current_mask: int = MASK[event.button_index]
+		if !(button_mask & current_mask): return
+		if bool(pressed & current_mask) == event.pressed: return
+		if event.pressed: pressed |= current_mask
+		else: pressed &= ~current_mask
 		emit_signal("pressed_state_changed", event.pressed, event.button_index)
-		set_process(pressed_arr.has(true))
+		set_process(pressed)
 		if !event.pressed && hovered: emit_signal("activated", event.button_index)
-
