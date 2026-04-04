@@ -3,7 +3,7 @@ extends Node
 
 class_name GUIPresser
 
-const MASK: Dictionary = {BUTTON_LEFT : BUTTON_MASK_LEFT, BUTTON_RIGHT : BUTTON_MASK_RIGHT, BUTTON_MIDDLE: BUTTON_MASK_MIDDLE}
+const MASK: Dictionary = { BUTTON_LEFT : BUTTON_MASK_LEFT, BUTTON_RIGHT : BUTTON_MASK_RIGHT, BUTTON_MIDDLE: BUTTON_MASK_MIDDLE }
 
 signal hover_state_changed(state)
 signal pressed_state_changed(state, button)
@@ -16,6 +16,10 @@ var parent: Control = null
 
 var pressed: int = 0
 var hovered: bool = false
+
+func is_button_pressed(button_index: int) -> bool:
+	if !MASK.has(button_index): return false
+	return pressed & MASK[button_index] != 0
 
 func _set_disabled(state: bool) -> void:
 	disabled = state
